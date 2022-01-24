@@ -1,5 +1,4 @@
-# <https://zenn.dev/yagiyuki/articles/b5545c3b546bbeb662bf>
-CC  = mpic++
+CC  = mpic++ -O3
 TARGET  = a.out
 SRCS    = mat_mult_mpi.cpp
 OBJS    = $(SRCS:.cpp=.o)
@@ -12,8 +11,11 @@ $(OBJS): $(SRCS)
 
 all: clean $(OBJS) $(TARGET)
 
-run:
-	mpiexec -n 4 ./${TARGET}
+run: $(TARGET)
+	mpiexec -n ${p} ./${TARGET} ${n}
 
 clean:
-	-rm -f $(OBJS) $(TARGET) *.d
+	-rm -f *.o $(TARGET)
+
+bench: ${TARGET}
+	./bench.sh > result.txt

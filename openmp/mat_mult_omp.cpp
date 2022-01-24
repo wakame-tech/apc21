@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     start = omp_get_wtime();
     mat_mult_omp(n, res, a, b);
     end = omp_get_wtime();
-    double time = end - start;
+    double time = (end - start) * 1000;
 
     printf("%d,%d,%f\n", t, n, time);
 

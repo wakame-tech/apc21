@@ -12,11 +12,11 @@ $(OBJS): $(SRCS)
 
 all: clean $(OBJS) $(TARGET)
 
-run:
+run: ${TARGET}
 	./${TARGET}
 
 clean:
-	-rm -f $(OBJS) $(TARGET) *.d
+	-rm -f *.o $(TARGET)
 
-bench:
-	make && ./bench.sh > result.txt
+bench: ${TARGET}
+	./bench.sh > result.txt

@@ -1,4 +1,4 @@
-CC  = nvcc
+CC  = nvcc -O3
 TARGET  = a.out
 SRCS    = mat_mult_cuda.cu
 OBJS    = $(SRCS:.cu=.o)
@@ -11,11 +11,11 @@ $(OBJS): $(SRCS)
 
 all: clean $(OBJS) $(TARGET)
 
-run:
+run: ${TARGET}
 	./${TARGET}
 
 clean:
-	-rm -f $(OBJS) $(TARGET) *.d
+	-rm -f *.o $(TARGET)
 
-bench:
-	make && ./bench.sh > result.txt
+bench: ${TARGET}
+	./bench.sh > result.txt
