@@ -1,0 +1,39 @@
+#include "mpi.h"
+#include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
+
+void dbg(int rank, int n, int* x) {
+    printf("rank %d:", rank);
+    for (int i = 0; i < n; i++) { 
+        printf("%d ", x[i]);
+    }
+    printf("\n");
+}
+
+int main(int argc, char ** argv) {
+    int n, myid, numprocs, i;
+
+    MPI_Init(&argc, &argv);
+    MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
+    MPI_Comm_rank(MPI_COMM_WORLD, &myid);
+
+    int N = 1 * numprocs;
+    int* x = (int *)calloc(N, sizeof(int));
+    if (myid == 0) {
+        for (int i = 0; i < N; i++) {
+            x[i] = i;
+        }
+    }
+
+    printf("1before x:");
+    dbg(myid, N, x);
+
+    MPI_Scatter(x, 1, MPI_INT, x, 1, MPI_INT, 0, MPI_COMM_WORLD);
+
+    printf("2after x:");
+    dbg(myid, N, x);
+
+    MPI_Finalize();
+    return 0;
+}
