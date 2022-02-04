@@ -2,85 +2,63 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 
-def to_gflops(n, time):
+def to_gflops(n, ms):
     ops = n ** 3
-    flops = ops / (time / 1e3)
+    flops = ops / (ms / 1e3)
     return flops / 1e9
 
 
-font = "Ricty Diminished"
-y = -0.3
-
-
-def prepare(ax):
+def prepare_perf(ax):
     ax.set_xlabel("N")
-    ax.set_ylabel("GFlops")
+    ax.set_ylabel("time[ms]")
+    plt.yscale("log")
     ax.grid(axis="y", which="major", color="0.6", linestyle="-")
     ax.grid(axis="y", which="minor", color="0.8", linestyle="-")
     ax.set_axisbelow(True)
 
 
-def plot_openmp(path: str):
-    df = pd.read_csv(path)
-    grouped = df.groupby(["n", "t"])
-    mn = pd.DataFrame(grouped.mean())
-    mn = mn.apply(lambda r: to_gflops(r.name[0], r.time), axis=1)
-    mn = mn.unstack()
-    print(mn)
-    ax = mn.plot.line(marker="o")
-    prepare(ax)
-    # plt.title(
-    #     r"Open MPでスレッド数を変えた時の $N \times N$ 行列積の性能",
-    #     fontname=font,
-    #     y=y,
-    # )
-    # ax.legend(tuple([f"threads = {t}" for (_, t) in mn.columns]))
-    # plt.show()
-    plt.savefig("./result_openmp.png")
-    plt.clf()
+def prepare_gflops(ax):
+    ax.set_xlabel("N")
+    ax.set_ylabel("GFlops")
+    plt.yscale("log")
+    ax.grid(axis="y", which="major", color="0.6", linestyle="-")
+    ax.grid(axis="y", which="minor", color="0.8", linestyle="-")
+    ax.set_axisbelow(True)
 
 
-def plot_mpi(path: str):
-    df = pd.read_csv(path)
+# mpi: n - t graph (every t)
+def plot_mpi_perf():
+    df = pd.read_csv("./../mpi/result_pn.txt")
     grouped = df.groupby(["n", "p"])
     mn = pd.DataFrame(grouped.mean())
-    mn = mn.apply(lambda r: to_gflops(r.name[0], r.time), axis=1)
     mn = mn.unstack()
-    print(mn)
-
     ax = mn.plot.line(marker="o")
-    prepare(ax)
-    # plt.title(
-    #     r"MPIでプロセス数を変えた時の $N \times N$ 行列積の性能",
-    #     fontname=font,
-    #     y=y,
-    # )
-    # ax.legend(tuple([f"processes = {p}" for (_, p) in mn.columns]))
-    # plt.show()
-    plt.savefig("./result_mpi.png")
+    prepare_perf(ax)
+    ax.legend(tuple([f"processes = {p}" for (_, p) in mn.columns]))
+    plt.savefig("./fig1.png")
     plt.clf()
 
 
-def plot_cuda(path: str):
+def df_n_gflops(path: str):
     df = pd.read_csv(path)
-    grouped = df.groupby(["n"])
-    mn = pd.DataFrame(grouped.mean())
-    mn = mn.apply(lambda r: to_gflops(r.name, r.time), axis=1)
-    print(mn)
+    df = df.groupby(["n"]).mean().reset_index()
+    df["gflops"] = df.apply(lambda r: to_gflops(r.n, r.time), axis=1)
+    return df
 
-    ax = mn.plot.line(marker="o")
-    # plt.title(
-    #     r"1 $\times$ 1 block, 32 $\times$ 32 thread/block での $N \times N$ 行列積の性能",
-    #     fontname=font,
-    #     y=y,
-    # )
-    prepare(ax)
-    # plt.show()
-    plt.savefig("./result_cuda.png")
+
+# openmp, mpi, cuda: n - GFlops graph
+def plot_gflops():
+    df_omp = df_n_gflops("./../openmp/result.txt")
+    df_mpi = df_n_gflops("../mpi/result_n.txt")
+    df_cuda = df_n_gflops("../cuda/result.txt")
+    ax = df_omp.plot.line(x="n", y="gflops", label="openmp", marker="o")
+    ax = df_mpi.plot.line(x="n", y="gflops", ax=ax, label="mpi", marker="o")
+    ax = df_cuda.plot.line(x="n", y="gflops", ax=ax, label="cuda", marker="o")
+    prepare_gflops(ax)
+    plt.savefig("./fig2.png")
     plt.clf()
 
 
 if __name__ == "__main__":
-    plot_openmp("./../openmp/result.txt")
-    plot_mpi("./../mpi/result.txt")
-    plot_cuda("./../cuda/result.txt")
+    plot_mpi_perf()
+    plot_gflops()
