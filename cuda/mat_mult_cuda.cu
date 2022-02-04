@@ -3,28 +3,7 @@
 #include <math.h>
 #include <random>
 
-__device__ int global_index() {
-    // how many threads per a block
-    int threadSize = blockDim.x * blockDim.y;
-    // n-th block in a grid
-    int blockIndex = blockIdx.y * gridDim.x + blockIdx.x;
-    // n-th thread in a block
-    int threadIndex = threadIdx.x * blockDim.x + threadIdx.y;
-    return threadSize * blockIndex + threadIndex;
-}
-
-__device__ int total_size() {
-    int blockSize = gridDim.x * gridDim.y;
-    int threadSize = blockDim.x * blockDim.y;
-    return blockSize * threadSize;
-}
-
 __global__ void mat_mult_cuda(int n, int threads, double * res_h, double * a_h, double * b_h) {
-    // int index = global_index();
-    // int total = total_size();
-    // for (int offset = 0; offset < size; offset += total) {
-    //     res_h[offset + index] = a_h[offset + index] + b_h[offset + index];
-    // }
     for (int j = threadIdx.x, i = threadIdx.y; j < n && i < n; j += threads, i += threads) {
         int ij = i * n + j;
         // printf("[%d, %d] = [%d] = %f, %f\n", i, j, index_1d, a_h[index_1d], b_h[index_1d]);
@@ -79,7 +58,7 @@ int main(int argc, char ** argv) {
     // 行列の大きさ (n行n列)
     int n = atoi(argv[1]);
     // スレッド数 (threads * threads スレッド, thread <= 32)
-    const int threads = 32;
+    const int threads = atoi(argv[2]);
 
     if (debug) {
         printf("n = %d, threads = %d\n", n, threads);
@@ -120,7 +99,6 @@ int main(int argc, char ** argv) {
 
     // call kernel
     dim3 grid(1, 1, 1);
-    // dim3 block(N, N, 1);
     dim3 block(threads, threads, 1);
 
     cudaEventRecord(start);
@@ -140,7 +118,7 @@ int main(int argc, char ** argv) {
     if (debug) {
         printf("time: %f ms\n", ms);
     } else {
-        printf("%d,%f\n", n, ms);
+        printf("%d,%d,%f\n", n, threads * threads, ms);
     }
     cudaEventDestroy(start);
     cudaEventDestroy(stop);

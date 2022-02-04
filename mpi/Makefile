@@ -17,5 +17,8 @@ run: $(TARGET)
 clean:
 	-rm -f *.o $(TARGET)
 
-bench: ${TARGET}
-	./bench.sh > result.txt
+bench_p: ${TARGET}
+	./bench_p.sh > result_p.txt
+
+bench_pn: ${TARGET}
+	./bench_pn.sh > result_pn.txt
